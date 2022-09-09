@@ -7,7 +7,6 @@
  * 
  * @copyright Released under the GNU GPLv3 Licence
  * @note Uses the jpeglib.h library distributed by libjpeg
- * 
  */
 
 #include <stdlib.h>
