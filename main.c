@@ -11,9 +11,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <turbojpeg.h>
 #include <getopt.h>
 #include <errno.h>
+
+//Include our image processing functions
+#include "jpeg.h"
 
 // Completely arbitrary number of allowed colors for now.
 #define MAX_NUM_COLORS 20
@@ -45,45 +47,49 @@ int main(int argc, char **argv) {
     {0,         0,                  0,   0}
   };
 
-  while(1){//parse options
-    option = getopt_long(argc, argv, VALID_OPTIONS,
-                         long_options, &option_index);
-    if(option == -1){
-      break;
-    }
-    switch(option){
-      case (int)'n': //Set a custom number of colors to return
-        char *p_end_char;
-        long long temp = strtol(optarg, &p_end_char, 10);
-        if(temp == 0 || errno == ERANGE || temp > MAX_NUM_COLORS){
-          printf("Invalid option for -n = %s\n", optarg);
-          print_help(argv[0]);
-          exit(1);
-        }
-        colors_to_return = (int)temp;
+  {//Just here to be able to collapse section while edigint
+  //TODO: Remove when this file is "done"
+    while(1){//parse options
+      option = getopt_long(argc, argv, VALID_OPTIONS,
+                          long_options, &option_index);
+      if(option == -1){
         break;
-      case (int)'h': //print help message
-      case '?':
-      default:
-        print_help(argv[0]);
-        exit(0);    
+      }
+      switch(option){
+        case (int)'n': //Set a custom number of colors to return
+          char *p_end_char;
+          long long temp = strtol(optarg, &p_end_char, 10);
+          if(temp == 0 || errno == ERANGE || temp > MAX_NUM_COLORS){
+            printf("Invalid option for -n = %s\n", optarg);
+            print_help(argv[0]);
+            exit(1);
+          }
+          colors_to_return = (int)temp;
+          break;
+        case (int)'h': //print help message
+        case '?':
+        default:
+          print_help(argv[0]);
+          exit(0);    
+      }
     }
-  }
 
-  if(optind >= argc || argc < 2){
-    printf("ERROR: Must specify a file\n");
-    print_help(argv[0]);
-    exit(1);
-  }else{
-    file_in = argv[optind];
-    p_file = fopen(file_in, "rb");
-    if(!p_file){
-      printf("ERROR: File %s does not exist\n", file_in);
+    if(optind >= argc || argc < 2){
+      printf("ERROR: Must specify a file\n");
+      print_help(argv[0]);
       exit(1);
+    }else{
+      file_in = argv[optind];
+      p_file = fopen(file_in, "rb");
+      if(!p_file){
+        printf("ERROR: File %s does not exist\n", file_in);
+        exit(1);
+      }
     }
   }
 
-  printf("%s, %d\n", file_in, colors_to_return);
+
+
 
   return 0;
 }
