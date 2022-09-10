@@ -9,16 +9,27 @@
  * @note Uses the jpeglib.h library distributed by libjpeg
  */
 
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
 #include <errno.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 //Include our image processing functions
 #include "jpeg.h"
 
 // Completely arbitrary number of allowed colors for now.
 #define MAX_NUM_COLORS 20
+#define JPEG_EXTS 5
+
+typedef enum SUPPORTED_EXT{
+  JPEG,
+  undefined
+} supported_ext_t;
+const char * tpyes[] = {"jpeg", "jpg", "jfif", "pjpeg", "pjp"};
 
 void print_help(char *file_name){
   char *out_string =  "Usage: %s file <options>\n"
@@ -32,7 +43,7 @@ int main(int argc, char **argv) {
   int option;                             //Value for getopt
   char *file_in;                          //The file path we are given
   int colors_to_return = 10;              //Number of dominant colors to find
-  FILE *p_file;                           //File
+  supported_ext_t file_type = undefined;
 
       //Define the options we accept
   static char *VALID_OPTIONS = "hn:";
@@ -80,16 +91,27 @@ int main(int argc, char **argv) {
       exit(1);
     }else{
       file_in = argv[optind];
-      p_file = fopen(file_in, "rb");
-      if(!p_file){
-        printf("ERROR: File %s does not exist\n", file_in);
-        exit(1);
-      }
     }
   }
 
+  //Get type of image (currently only JPEG)
+  char *ext = strrchr(file_in, '.');
+  for(int i = 0; i < JPEG_EXTS; i++){
+    if(strcmp(ext, tpyes[i])){
+      file_type = JPEG;
+      goto ext_assigned;
+    }
+  }
 
-
+ext_assigned:
+  switch(file_type){
+    case JPEG:
+      decompress_image(file_in);
+      break;
+    default:
+      printf("Invalid File Tpye %s", ext);
+      break;
+  }
 
   return 0;
 }
