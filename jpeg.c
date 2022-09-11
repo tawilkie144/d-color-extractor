@@ -69,3 +69,8 @@ bailout:
   if(jpeg_decompressor) tjDestroy(jpeg_decompressor);
   return r_val;
 }
+
+
+void jpg_free(unsigned char *img_buff){
+  if(img_buff) tjFree(img_buff);
+}

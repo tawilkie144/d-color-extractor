@@ -18,46 +18,31 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-//Include our image processing functions
+
+#include "d_color_extractor.h"
 #include "jpeg.h"
 #include "common.h"
 
-// Completely arbitrary number of allowed colors for now.
-#define MAX_NUM_COLORS 20
-#define JPEG_EXTS 5
-
-typedef enum SUPPORTED_EXT{
-  JPEG,
-  undefined
-} supported_ext_t;
-const char * tpyes[] = {"jpeg", "jpg", "jfif", "pjpeg", "pjp"};
-
-void print_help(char *file_name){
-  char *out_string =  "Usage: %s file <options>\n"
-                      "operations:\n"
-                      "  %s file -h, --help\t\t\tPrints this message\n"
-                      "  %s file -n colors, --number=colors\tSets the max number of dominant colors to return\n";
-  printf(out_string, file_name, file_name);
-}
-
 int main(int argc, char **argv) {
-  int option;                             //Value for getopt
-  char *file_in;                          //The file path we are given
-  int colors_to_return = 10;              //Number of dominant colors to find
-  supported_ext_t file_type = undefined;
+  int option;                     //Value for getopt
+  char *file_in;                  //The file path we are given
+  int colors_to_return = 10;      //Number of dominant colors to find
+  int bucket_size = 15;           //Bucket size. i.e. for each of R,G,B
+                                  //if a color is within 0-14 15-29...240-255
+  supported_ext_t file_type = undefined;//Type of file that is input
 
-      //Define the options we accept
+  //Define the options we accept
   static char *VALID_OPTIONS = "hn:";
-
   int option_index = 0;
   static struct option long_options[] =
   {
     {"help",   no_argument,         0,  'h'},
     {"number", required_argument,   0,  'n'},
+    {"bucket", required_argument,   0,  'b'},
     {0,         0,                  0,   0}
   };
 
-  {//Just here to be able to collapse section while edigint
+  {//Just here to be able to collapse section while editing
   //TODO: Remove when this file is "done"
     while(1){//parse options
       option = getopt_long(argc, argv, VALID_OPTIONS,
@@ -65,12 +50,23 @@ int main(int argc, char **argv) {
       if(option == -1){
         break;
       }
+
+      char *p_end_char; //used for strtol
+      long long temp;
       switch(option){
         case (int)'n': //Set a custom number of colors to return
-          char *p_end_char;
-          long long temp = strtol(optarg, &p_end_char, 10);
+          temp = strtol(optarg, &p_end_char, 10);
           if(temp == 0 || errno == ERANGE || temp > MAX_NUM_COLORS){
             printf("Invalid option for -n = %s\n", optarg);
+            print_help(argv[0]);
+            exit(1);
+          }
+          colors_to_return = (int)temp;
+          break;
+        case (int)'b': //Set bucket size. default of 15
+          temp = strtol(optarg, &p_end_char, 10);
+          if(temp <= 0 || errno == ERANGE || temp > MAX_BUCKET_SIZE){
+            printf("Invalid option for -b = %s\n", optarg);
             print_help(argv[0]);
             exit(1);
           }
@@ -113,6 +109,9 @@ ext_assigned:
       break;
   }
 
+  printf("%d", bucket_size);
+  //extract_colors(image_spec, );
+
   printf("colors returned: %d\n\nwidth: %d\nheight: %d\n",colors_to_return, image_spec->width, image_spec->height);
 
   for(int y = 0; y < image_spec->height; y++){
@@ -129,6 +128,19 @@ ext_assigned:
     printf("\n");
   }
 
-  free(image_spec);
+  jpg_free(image_spec->image_data);
   return 0;
+}
+
+
+void print_help(char *file_name){
+  char *out_string =  "Usage: %s file <options>\n"
+                      "operations:\n"
+                      "  -h, --help      \tPrints this message\n"
+                      "  -n #, --number=#\tSets the max number of dominant\n"
+                      "                  \tcolors to return\n"
+                      "  -b #, --bucket=#\tSets the size of buckets to\n"
+                      "                  \tdifferentiate colors by. Defaults\n"
+                      "                  \tto 15 (0-14,15-30...240-255)";
+  printf(out_string, file_name, file_name);
 }
