@@ -20,6 +20,7 @@
 
 //Include our image processing functions
 #include "jpeg.h"
+#include "common.h"
 
 // Completely arbitrary number of allowed colors for now.
 #define MAX_NUM_COLORS 20
@@ -48,13 +49,11 @@ int main(int argc, char **argv) {
       //Define the options we accept
   static char *VALID_OPTIONS = "hn:";
 
-  int this_option_optind = optind ? optind : 1;
   int option_index = 0;
   static struct option long_options[] =
   {
     {"help",   no_argument,         0,  'h'},
     {"number", required_argument,   0,  'n'},
-    {"verbose", no_argument,        0,   0},
     {0,         0,                  0,   0}
   };
 
@@ -104,14 +103,32 @@ int main(int argc, char **argv) {
   }
 
 ext_assigned:
+  image_t *image_spec = malloc(sizeof(image_t));
   switch(file_type){
     case JPEG:
-      decompress_image(file_in);
+      decompress_image(file_in, image_spec);
       break;
     default:
       printf("Invalid File Tpye %s", ext);
       break;
   }
 
+  printf("colors returned: %d\n\nwidth: %d\nheight: %d\n",colors_to_return, image_spec->width, image_spec->height);
+
+  for(int y = 0; y < image_spec->height; y++){
+    for(int x = 0; x < image_spec->width; x++){
+      int pixel = (y * x) + x;
+      printf("(");
+      for(int b = 0; b < image_spec->bytes_per_pixel; b++){
+        int byte = (pixel * image_spec->bytes_per_pixel) + b;
+        printf("%u", image_spec->image_data[byte]);
+        if(b != image_spec->bytes_per_pixel - 1) printf(", ");
+      }
+      printf(")\t");
+    }
+    printf("\n");
+  }
+
+  free(image_spec);
   return 0;
 }

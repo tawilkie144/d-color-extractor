@@ -3,6 +3,9 @@
 
 #define COLOR_COMPONENTS 3
 
-int decompress_image(char *);
+struct image;
+typedef struct image image_t;
+
+int decompress_image(char *, image_t *);
 
 #endif
