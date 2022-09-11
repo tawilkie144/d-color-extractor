@@ -1,5 +1,6 @@
 #data objects
 *.json
+*.txt
 
 # Prerequisites
 *.d
