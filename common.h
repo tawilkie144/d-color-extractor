@@ -8,5 +8,4 @@ typedef struct image{
     int bytes_per_pixel;
   } image_t;
 
-
 #endif

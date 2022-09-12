@@ -25,31 +25,6 @@ typedef enum SUPPORTED_EXT{
   undefined
 } supported_ext_t;
 
-/**
- * @brief Representation of a pixel with R,G,B, and Alpha values
- * 
- */
-typedef struct pixel{
-  unsigned char red;
-  unsigned char green;
-  unsigned char blue;
-  unsigned char alpha;
-}pixel_t;
-
-/**
- * @brief Represents a histogram bucket for colors Keeps a count of the number
- *        of pixels in the range as well as hold a representative color. In the
- *        implementation, the representative is the average of all colors in
- *        the bucket 
- * 
- * @property count
- * @property representative
- */
-typedef struct histogram_bucket{
-  int count;
-  pixel_t representative;
-}bucket_t;
-
 const char * tpyes[] = {"jpg", "jfif", "pjpeg", "pjp"};
 
 //===========================================================================//

@@ -1,11 +1,12 @@
 ﻿/**
- * @file test.c
+ * @file main.c
  * @author Timothy Wilkie (timothy.wilkie@gmail.com)
  * @brief 
  * @version 0.1
  * @date 2022-09-08
  * 
  * @copyright Released under the GNU GPLv3 Licence
+ * @note Uses the jpeglib-turbo library
  * @note Uses the jpeglib.h library distributed by libjpeg
  */
 
@@ -20,6 +21,7 @@
 
 
 #include "d_color_extractor.h"
+#include "image_analyzer.h"
 #include "jpeg.h"
 #include "common.h"
 
@@ -109,8 +111,7 @@ ext_assigned:
       break;
   }
 
-  printf("%d", bucket_size);
-  //extract_colors(image_spec, );
+  extract_dominant_colors(image_spec->image_data, bucket_size, 3);
 
   printf("colors returned: %d\n\nwidth: %d\nheight: %d\n",colors_to_return, image_spec->width, image_spec->height);
 

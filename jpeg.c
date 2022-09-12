@@ -3,6 +3,8 @@
 
 #include "jpeg.h"
 #include "common.h"
+
+
 #define ERROR_HANDLE(message){\
   printf("Error encountered: %s \\n", message);\
   r_val = -1;\
