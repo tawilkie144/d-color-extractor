@@ -10,8 +10,8 @@
 #define MAX_NUM_COLORS 20
 // Completely arbitrary bucket size
 #define MAX_BUCKET_SIZE 85
-// Three chanels, R,G, and B.
-#define CHANELS 3
+// Three chanels, R,G,B, and A.
+#define CHANELS 4
 
 #define JPEG_EXTS 4
 
