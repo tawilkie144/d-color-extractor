@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
   supported_ext_t file_type = undefined;//Type of file that is input
 
   //Define the options we accept
-  static char *VALID_OPTIONS = "hn:";
+  static char *VALID_OPTIONS = "hn:b:";
   int option_index = 0;
   static struct option long_options[] =
   {
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
             print_help(argv[0]);
             exit(1);
           }
-          colors_to_return = (int)temp;
+          bucket_size = (int)temp;
           break;
         case (int)'h': //print help message
         case '?':
@@ -111,7 +111,7 @@ ext_assigned:
       break;
   }
 
-  extract_dominant_colors(image_spec->image_data, bucket_size, 3);
+  extract_dominant_colors(image_spec->image_data, 3, bucket_size);
 
   printf("colors returned: %d\n\nwidth: %d\nheight: %d\n",colors_to_return, image_spec->width, image_spec->height);
 
