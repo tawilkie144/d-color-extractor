@@ -17,6 +17,7 @@ struct pixel_t;
  */
 typedef struct histogram_bucket{
   int count;
+  int data_size;
   unsigned char *representative;
 }bucket_t;
 
@@ -39,7 +40,8 @@ typedef struct histogram{
 //---------------------------------Functions---------------------------------//
 //===========================================================================//
 
-histogram_t *create_histogram();
+histogram_t *create_histogram(int size);
+int hist_load_data(histogram_t *hist, unsigned char *data);
 void destroy_histogram(histogram_t *to_destroy);
 bucket_t *create_histogram_bucket();
 void destroy_histogram_bucket(bucket_t *to_destroy);

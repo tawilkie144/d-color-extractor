@@ -28,16 +28,17 @@ void extract_dominant_colors(unsigned char *image_data, int channels,
 
   int size_of_histogram;
 
-  int number_channel_buckets = ceil(255.0/(float)bucket_size);
+  int number_channel_buckets = ceil((double)DATA_DEPTH/(double)bucket_size);
   long temp = ciell(powl(number_channel_buckets, channels));
   if(temp >= INT_MAX){
-    bucket_size = ceil(255/ciell(logl(INT_MAX - 1)/log(channels)));
+    bucket_size = ceil(DATA_DEPTH/ciell(logl(INT_MAX - 1)/log(channels)));
     size_of_histogram = INT_MAX - 1;
   }else{
     size_of_histogram = temp;
   }
   
-  histogram_t *histogram = create_histogram();
+  histogram_t *histogram = create_histogram(size_of_histogram, bucket_size);
+  hist_load_data(histogram, image_data);
 
 
   //Running into an issue here. so for each bucket in each channel, I need to
