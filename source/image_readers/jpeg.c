@@ -1,14 +1,41 @@
 ﻿#include <turbojpeg.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "jpeg.h"
-#include "common.h"
+#include "../common.h"
 
 
 #define ERROR_HANDLE(message){\
   printf("Error encountered: %s \\n", message);\
   r_val = -1;\
   goto bailout; \
+}
+
+pixel_t **format_as_rgb_pixels(unsigned char *image_data, int number_of_pixels, int number_of_channels){
+  int i = 0;
+
+  pixel_t **r_val = malloc(sizeof(pixel_t) * number_of_pixels);
+  if(!r_val) return NULL;
+
+  for(i = 0; i < number_of_pixels; i++){
+    r_val[i] = create_pixel(number_of_channels, (image_data + (i * number_of_channels)));
+    if(!r_val[i])
+      goto bailout;
+  }
+
+  return r_val;
+
+bailout:
+  if(r_val){
+    for(i = 0; i < number_of_pixels; i++){
+      if(!r_val[i])
+        break;
+      destroy_pixel(r_val[i]);
+    }
+    free(r_val);
+  }
+  return NULL;
 }
 
 int decompress_image(char *file_path, image_t *image_spec){
@@ -18,6 +45,7 @@ int decompress_image(char *file_path, image_t *image_spec){
   int in_subsample, in_colorspace;
   unsigned long jpeg_size;
   unsigned char *jpeg_buff;
+  unsigned char *image_data;
   tjhandle jpeg_decompressor;
   int r_val = 0;
 
@@ -50,29 +78,23 @@ int decompress_image(char *file_path, image_t *image_spec){
 
   pixel_format = TJPF_RGBA;
   image_spec->bytes_per_pixel = tjPixelSize[pixel_format];
-  if ((image_spec->image_data = (unsigned char *)tjAlloc(image_spec->width * image_spec->height *
+  if ((image_data = (unsigned char *)tjAlloc(image_spec->width * image_spec->height *
                                           tjPixelSize[pixel_format])) == NULL)
     ERROR_HANDLE("allocating uncompressed image buffer");
 
-  if (tjDecompress2(jpeg_decompressor, jpeg_buff, jpeg_size, image_spec->image_data, image_spec->width, 0, image_spec->height,
+  if (tjDecompress2(jpeg_decompressor, jpeg_buff, jpeg_size, image_data, image_spec->width, 0, image_spec->height,
                     pixel_format, 0) < 0)
     ERROR_HANDLE("decompressing JPEG image");
-
-  tjSaveImage("/home/timothy/pictures/test.png",  image_spec->image_data, image_spec->width, 0, image_spec->height, pixel_format, 0);
+  image_spec->pixel_data = format_as_rgb_pixels(image_data, image_spec->width * image_spec->height, image_spec->bytes_per_pixel);
+  tjSaveImage("/home/timothy/pictures/test.png",  image_data, image_spec->width, 0, image_spec->height, pixel_format, 0);
   tjFree(jpeg_buff);  jpeg_buff = NULL;
   tjDestroy(jpeg_decompressor);  jpeg_decompressor = NULL;
-
-  printf("Bytes per Line: %d\n\n", image_spec->width * tjPixelSize[pixel_format]);
 
 
 bailout:
   if(jpeg_file) fclose(jpeg_file);
   if(jpeg_buff) tjFree(jpeg_buff);
   if(jpeg_decompressor) tjDestroy(jpeg_decompressor);
+  if(image_data) tjFree(image_data);
   return r_val;
-}
-
-
-void jpg_free(unsigned char *img_buff){
-  if(img_buff) tjFree(img_buff);
 }

@@ -1,5 +1,7 @@
-﻿#ifndef PIXEL_H
-#define PIXEL_H
+﻿#ifndef COMMON_H
+#define COMMON_H
+
+#define DATA_DEPTH 255
 
 //===========================================================================//
 //----------------------------------Records----------------------------------//
@@ -10,11 +12,19 @@ typedef struct pixel{
   int channels;
 } pixel_t;
 
+typedef struct image{
+    pixel_t **pixel_data;
+    int width;
+    int height;
+    int bytes_per_pixel;
+  } image_t;
+
 //===========================================================================//
 //---------------------------------Functions---------------------------------//
 //===========================================================================//
 
-pixel_t *create_pixel();
-void destroy_pixel(pixel_t *to_destroy);
+void destroy_image(image_t *);
+pixel_t *create_pixel(int depth, unsigned char *data);
+void destroy_pixel(pixel_t *);
 
 #endif

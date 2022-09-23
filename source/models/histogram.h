@@ -1,7 +1,7 @@
 ﻿#ifndef HISTOGRAM_H
 #define HISTOGRAM_H
 
-struct pixel_t;
+typedef struct pixel pixel_t;
 
 //===========================================================================//
 //----------------------------------Records----------------------------------//
@@ -18,7 +18,7 @@ struct pixel_t;
 typedef struct histogram_bucket{
   int count;
   int data_size;
-  unsigned char *representative;
+  pixel_t *representative;
 }bucket_t;
 
 /**
@@ -40,15 +40,13 @@ typedef struct histogram{
 //---------------------------------Functions---------------------------------//
 //===========================================================================//
 
-histogram_t *create_histogram(int size);
-int hist_load_data(histogram_t *hist, unsigned char *data);
+histogram_t *create_histogram(int size, int bucket_size);
+int hist_load_data(histogram_t *hist, pixel_t **data, int data_count, int data_size);
 void destroy_histogram(histogram_t *to_destroy);
-bucket_t *create_histogram_bucket();
-void destroy_histogram_bucket(bucket_t *to_destroy);
-int calculate_index(int bucket_size, unsigned char *value, int value_size);
+int calculate_index(int bucket_size, pixel_t *pixel, int value_size);
 double moving_average(double last_average, double added, int new_count);
-void add_to_average(bucket_t * bucket, pixel_t *pixel);
-int add_to_histogram(histogram_t *histogram, unsigned char *pixel,
+int add_to_bucket(bucket_t* bucket, pixel_t *pixel);
+int add_to_histogram(histogram_t *histogram, pixel_t *pixel,
                      int channels);
 
 #endif

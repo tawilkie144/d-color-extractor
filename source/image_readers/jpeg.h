@@ -8,6 +8,4 @@ typedef struct image image_t;
 
 int decompress_image(char *, image_t *);
 
-void jpg_free(unsigned char *);
-
 #endif

@@ -22,7 +22,7 @@
 
 #include "d_color_extractor.h"
 #include "image_analyzer.h"
-#include "jpeg.h"
+#include "image_readers/jpeg.h"
 #include "common.h"
 
 int main(int argc, char **argv) {
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
     }
   }
 
-ext_assigned:
+ext_assigned: ;
   image_t *image_spec = malloc(sizeof(image_t));
   switch(file_type){
     case JPEG:
@@ -111,25 +111,20 @@ ext_assigned:
       break;
   }
 
-  extract_dominant_colors(image_spec->image_data, 3, bucket_size);
+  extract_dominant_colors(image_spec->pixel_data, image_spec->height * image_spec->width, 3, bucket_size);
 
-  printf("colors returned: %d\n\nwidth: %d\nheight: %d\n",colors_to_return, image_spec->width, image_spec->height);
+  printf("colors returned: %d\n\nwidth: %d\nheight: %d\n\n\nbucket size: %d\n",colors_to_return, image_spec->width, image_spec->height, bucket_size);
 
-  for(int y = 0; y < image_spec->height; y++){
-    for(int x = 0; x < image_spec->width; x++){
-      int pixel = (y * x) + x;
-      printf("(");
-      for(int b = 0; b < image_spec->bytes_per_pixel; b++){
-        int byte = (pixel * image_spec->bytes_per_pixel) + b;
-        printf("%u", image_spec->image_data[byte]);
-        if(b != image_spec->bytes_per_pixel - 1) printf(", ");
-      }
-      printf(")\t");
+  for(int p = 0; p < image_spec->height * image_spec->width; p++){
+    printf("(");
+    for(int c = 0; c < image_spec->bytes_per_pixel; c++){
+      printf("%03u", image_spec->pixel_data[p]->values[c]);
+      if(c!=image_spec->bytes_per_pixel) printf("\t");
     }
     printf("\n");
   }
 
-  jpg_free(image_spec->image_data);
+  destroy_image(image_spec);
   return 0;
 }
 
@@ -144,4 +139,41 @@ void print_help(char *file_name){
                       "                  \tdifferentiate colors by. Defaults\n"
                       "                  \tto 15 (0-14,15-30...240-255)";
   printf(out_string, file_name, file_name);
+}
+
+pixel_t *create_pixel(int depth, unsigned char *data){
+  pixel_t *r_value = malloc(sizeof(pixel_t));
+  if(!r_value) return NULL;
+  r_value->channels = depth;
+  r_value->values = malloc(sizeof(unsigned char) * depth);
+  if(!r_value->values){
+    free(r_value);
+    return NULL;
+  }
+  for(int i = 0; i < depth; i++){
+    r_value->values[i] = data[i];
+  }
+
+  return r_value;
+}
+
+void destroy_pixel(pixel_t *to_destroy){
+  if(!to_destroy) 
+    return;
+  if(to_destroy->values)
+    free(to_destroy->values);
+  free(to_destroy);
+}
+
+void destroy_image(image_t *to_destroy){
+  if(!to_destroy)
+    return;
+  if(to_destroy->pixel_data){
+    for(int i = 0; i < to_destroy->height * to_destroy->width; i++){
+      if(to_destroy->pixel_data[i])
+        destroy_pixel(to_destroy->pixel_data[i]);
+    }
+    free(to_destroy->pixel_data);
+  }
+  free(to_destroy);
 }

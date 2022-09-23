@@ -5,11 +5,10 @@
 
 #include "common.h"
 #include "models/histogram.h"
-#include "models/pixel.h"
 #include "image_analyzer.h"
 
-void extract_dominant_colors(unsigned char *image_data, int channels,
-                              int bucket_size){
+void extract_dominant_colors(pixel_t **image_data, int data_count,
+                             int channels, int bucket_size){
   // FILE *temp_file = fopen("/home/timothy/Documents/Index.txt", "w");
   // int number_channel_buckets = ceil(255.0/(float)bucket_size);
   // unsigned char *temp = malloc(sizeof(unsigned char) * 3);
@@ -29,16 +28,16 @@ void extract_dominant_colors(unsigned char *image_data, int channels,
   int size_of_histogram;
 
   int number_channel_buckets = ceil((double)DATA_DEPTH/(double)bucket_size);
-  long temp = ciell(powl(number_channel_buckets, channels));
+  long temp = ceil(powl(number_channel_buckets, channels));
   if(temp >= INT_MAX){
-    bucket_size = ceil(DATA_DEPTH/ciell(logl(INT_MAX - 1)/log(channels)));
+    bucket_size = ceil(DATA_DEPTH/ceil(logl(INT_MAX - 1)/log(channels)));
     size_of_histogram = INT_MAX - 1;
   }else{
     size_of_histogram = temp;
   }
   
   histogram_t *histogram = create_histogram(size_of_histogram, bucket_size);
-  hist_load_data(histogram, image_data);
+  hist_load_data(histogram, image_data, data_count, channels);
 
 
   //Running into an issue here. so for each bucket in each channel, I need to

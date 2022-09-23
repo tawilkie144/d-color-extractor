@@ -1,6 +1,6 @@
 #data objects
 *.json
-*.txt
+*.vlgrd
 
 # Prerequisites
 *.d
@@ -39,6 +39,9 @@
 *.i*86
 *.x86_64
 *.hex
+
+# Build files
+/build/*
 
 # Debug files
 *.dSYM/
