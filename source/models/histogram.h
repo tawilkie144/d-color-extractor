@@ -45,6 +45,7 @@ typedef struct histogram{
 histogram_t *create_histogram(int size, int bucket_size, int channel_size);
 int hist_load_data(histogram_t *hist, pixel_t **data, int data_count, 
                    int data_size);
+int trim_histogram(histogram_t *to_trim);
 void destroy_histogram(histogram_t *to_destroy);
 
 #endif

@@ -9,8 +9,9 @@
 
 int bucket_comparator(const void *lhs, const void *rhs);
 
-void extract_dominant_colors(pixel_t **image_data, int data_count,
-                             int channels, int bucket_size){
+color_t **extract_dominant_colors(int *number_to_return, pixel_t **image_data,
+                             int data_count, int channels, int bucket_size)
+{
   int size_of_histogram;
 
   int number_channel_buckets = ceil((double)DATA_DEPTH/(double)bucket_size);
@@ -30,58 +31,52 @@ void extract_dominant_colors(pixel_t **image_data, int data_count,
     //not all data was processed
   }
 
-  int adjusted_size = 0;
-  int next_empty = 0;
-  int r_ptr = histogram->capacity - 1;
+  int adjusted_size = trim_histogram(histogram);
 
-  while(next_empty < r_ptr){
-    while(next_empty < histogram->capacity 
-          && histogram->values[next_empty] && next_empty <= r_ptr){
-      next_empty++;
-      adjusted_size++;
-      if(next_empty == histogram->capacity) goto sorted;
-    }
-    if(!histogram->values[next_empty] && histogram->values[r_ptr]){
-      histogram->values[next_empty] = histogram->values[r_ptr];
-      histogram->values[r_ptr] = NULL;
-      adjusted_size++;
-      next_empty++;
-    }
-    while(r_ptr > 0 && !histogram->values[r_ptr] && next_empty < r_ptr){
-      r_ptr--;
-    }
-  }
-
-sorted:
   printf("histogram size: %d\nadjusted size: %d\n\n", histogram->size, adjusted_size);
 
-  for(int i = 0; i < adjusted_size; i++){
-    printf("(");
-    for(int j = 0; j < histogram->values[i]->data_size; j++){
-      printf("%d", (int)histogram->values[i]->representative->values[j]);
-      if(j!=histogram->values[i]->data_size - 1) printf("\t");
+  qsort(histogram->values, histogram->capacity, sizeof(bucket_t *), bucket_comparator);
+
+  for(int i = 0; i < histogram->capacity; i++){
+    if(histogram->values[i]){
+      printf("(");
+      for(int j = 0; j < histogram->values[i]->data_size; j++){
+        printf("%d", (int)histogram->values[i]->representative->values[j]);
+        if(j!=histogram->values[i]->data_size - 1) printf("\t");
+      }
+      printf("):\t%d\n",histogram->values[i]->count);
     }
-    printf("):\t%d\n",histogram->values[i]->count);
   }
-  printf("\n\n");
 
-  qsort(histogram->values,histogram->size,sizeof(bucket_t *),bucket_comparator);
+  if(histogram->size < *number_to_return){
+    *number_to_return = histogram->size;
+    //if verbose
+    printf("You have requested more colors that are present in the image.\n\
+            Try reducing the bucket size, or the number of desired dominant \
+            colors.\n There are %d colors in the image with the bucket size of\
+            %d", histogram->size, bucket_size);
+  } 
 
-  for(int i = 0; i < adjusted_size; i++){
-    printf("(");
-    for(int j = 0; j < histogram->values[i]->data_size; j++){
-      printf("%d", (int)histogram->values[i]->representative->values[j]);
-      if(j!=histogram->values[i]->data_size - 1) printf("\t");
-    }
-    printf("):\t%d\n",histogram->values[i]->count);
+  color_t **r_val = malloc(sizeof(color_t *) * *number_to_return);
+  for(int i = 0; i < *number_to_return; i++){
+    r_val[i] = create_color(histogram->values[i]->representative);
   }
 
   destroy_histogram(histogram);
+
+  return r_val;
 }
 
 int bucket_comparator(const void *lhs, const void *rhs){
-  int l = ((bucket_t *)lhs)->count;
-  int r = ((bucket_t *)rhs)->count;
+  bucket_t *l = *(bucket_t **)lhs;
+  bucket_t *r = *(bucket_t **)rhs;
+
+  if(!l) return 1;
+  if(!r) return -1;
+
+
+  int l_val = (*(bucket_t **)lhs)->count;
+  int r_val = (*(bucket_t **)rhs)->count;
    
-   return (l-r);
+   return -(l_val-r_val);
 }

@@ -26,6 +26,7 @@
 #include "common.h"
 
 int main(int argc, char **argv) {
+  int i;
   int option;                     //Value for getopt
   char *file_in;                  //The file path we are given
   int colors_to_return = 10;      //Number of dominant colors to find
@@ -93,7 +94,7 @@ int main(int argc, char **argv) {
 
   //Get type of image (currently only JPEG)
   char *ext = strrchr(file_in, '.');
-  for(int i = 0; i < JPEG_EXTS; i++){
+  for(i = 0; i < JPEG_EXTS; i++){
     if(strcmp(ext, tpyes[i])){
       file_type = JPEG;
       goto ext_assigned;
@@ -111,21 +112,14 @@ ext_assigned: ;
       break;
   }
 
-  extract_dominant_colors(image_spec->pixel_data,
-                          image_spec->height * image_spec->width,
-                          DEPTH, bucket_size);
+  color_t **dominant_colors = extract_dominant_colors(&colors_to_return,
+                                image_spec->pixel_data,
+                                image_spec->height * image_spec->width,
+                                image_spec->bytes_per_pixel, bucket_size);
 
-  printf("colors returned: %d\n\nwidth: %d\nheight: %d\n\n\nbucket size: %d\n",
-          colors_to_return, image_spec->width, image_spec->height, bucket_size);
-
-  for(int p = 0; p < image_spec->height * image_spec->width; p++){
-    printf("(");
-    for(int c = 0; c < image_spec->bytes_per_pixel; c++){
-      printf("%03u", image_spec->pixel_data[p]->values[c]);
-      if(c!=image_spec->bytes_per_pixel) printf("\t");
-    }
-    printf("\n");
-  }
+  for(i = 0; i < colors_to_return; i++){
+    print_colors(dominant_colors[i]);
+  }  
 
   destroy_image(image_spec);
   return 0;
@@ -179,4 +173,28 @@ void destroy_image(image_t *to_destroy){
     free(to_destroy->pixel_data);
   }
   free(to_destroy);
+}
+
+color_t *create_color(pixel_t *value){
+  unsigned char *temp = calloc(value->channels, sizeof(unsigned char));
+  color_t *r_val = malloc(sizeof(color_t));
+  r_val->channels = value->channels;
+  r_val->monochrome_depth = 2;
+  r_val->analogous_count = 2;
+  r_val->color = create_pixel(value->channels, value->values);
+  for(int i = 0; i < value->channels; i++){
+    temp[i] = (unsigned char)(255 - (int)value->values[i]);
+  }
+  r_val->complement = create_pixel(value->channels, temp);
+  
+
+  return r_val;
+}
+
+void print_color(color_t *color){
+
+}
+
+void destroy_color(color_t *to_destroy){
+
 }

@@ -54,7 +54,7 @@ int decompress_image(char *file_path, image_t *image_spec){
   printf("Input Image:  %d x %d pixels \n",
           image_spec->width, image_spec->height);
 
-  pixel_format = TJPF_RGBA;
+  pixel_format = TJPF_RGB;
   image_spec->bytes_per_pixel = tjPixelSize[pixel_format];
   if ((image_data = (unsigned char *)tjAlloc(image_spec->width * 
                                              image_spec->height *

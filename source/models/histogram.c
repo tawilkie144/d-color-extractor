@@ -67,6 +67,36 @@ int hist_load_data(histogram_t *hist, pixel_t **data, int data_count,
   return added;
 }
 
+int trim_histogram(histogram_t *to_trim){
+  int adjusted_size = 0;
+  int next_empty = 0;
+  int r_ptr = to_trim->capacity - 1;
+
+  while(next_empty < r_ptr){
+    while(next_empty < to_trim->capacity 
+          && to_trim->values[next_empty] && next_empty <= r_ptr){
+      next_empty++;
+      adjusted_size++;
+      if(next_empty == to_trim->capacity || next_empty > r_ptr) goto sorted;
+    }
+    if(next_empty < r_ptr && !to_trim->values[next_empty] && to_trim->values[r_ptr]){
+      to_trim->values[next_empty] = to_trim->values[r_ptr];
+      to_trim->values[r_ptr] = NULL;
+      adjusted_size++;
+      next_empty++;
+    }
+    while(r_ptr > 0 && !to_trim->values[r_ptr] && next_empty < r_ptr){
+      r_ptr--;
+    }
+  }
+
+sorted:
+  to_trim->values = realloc(to_trim->values, adjusted_size * sizeof(bucket_t *));
+  to_trim->capacity = adjusted_size;
+
+  return adjusted_size;
+}
+
 int calculate_index(int bucket_size, pixel_t *value, int value_size, int base){
   double index = 0;
   for(int i = value_size-1; i >= 0; i--){
