@@ -3,7 +3,8 @@
 
 typedef struct pixel pixel_t;
 
-void extract_dominant_colors(pixel_t **image_data, int data_count, int channels, int bucket_size);
+void extract_dominant_colors(pixel_t **image_data, int data_count, int channels,
+                             int bucket_size);
 
 
 #endif

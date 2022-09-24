@@ -111,9 +111,12 @@ ext_assigned: ;
       break;
   }
 
-  extract_dominant_colors(image_spec->pixel_data, image_spec->height * image_spec->width, 3, bucket_size);
+  extract_dominant_colors(image_spec->pixel_data,
+                          image_spec->height * image_spec->width,
+                          DEPTH, bucket_size);
 
-  printf("colors returned: %d\n\nwidth: %d\nheight: %d\n\n\nbucket size: %d\n",colors_to_return, image_spec->width, image_spec->height, bucket_size);
+  printf("colors returned: %d\n\nwidth: %d\nheight: %d\n\n\nbucket size: %d\n",
+          colors_to_return, image_spec->width, image_spec->height, bucket_size);
 
   for(int p = 0; p < image_spec->height * image_spec->width; p++){
     printf("(");
@@ -137,7 +140,7 @@ void print_help(char *file_name){
                       "                  \tcolors to return\n"
                       "  -b #, --bucket=#\tSets the size of buckets to\n"
                       "                  \tdifferentiate colors by. Defaults\n"
-                      "                  \tto 15 (0-14,15-30...240-255)";
+                      "                  \tto 15 (0-14,15-29...239-255)";
   printf(out_string, file_name, file_name);
 }
 
@@ -145,7 +148,7 @@ pixel_t *create_pixel(int depth, unsigned char *data){
   pixel_t *r_value = malloc(sizeof(pixel_t));
   if(!r_value) return NULL;
   r_value->channels = depth;
-  r_value->values = malloc(sizeof(unsigned char) * depth);
+  r_value->values = calloc(depth, sizeof(unsigned char));
   if(!r_value->values){
     free(r_value);
     return NULL;

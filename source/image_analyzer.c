@@ -7,24 +7,10 @@
 #include "models/histogram.h"
 #include "image_analyzer.h"
 
+int bucket_comparator(const void *lhs, const void *rhs);
+
 void extract_dominant_colors(pixel_t **image_data, int data_count,
                              int channels, int bucket_size){
-  // FILE *temp_file = fopen("/home/timothy/Documents/Index.txt", "w");
-  // int number_channel_buckets = ceil(255.0/(float)bucket_size);
-  // unsigned char *temp = malloc(sizeof(unsigned char) * 3);
-  // for(int r = 0; r < number_channel_buckets; r++){
-  //   temp[0] = r;
-  //   for(int g = 0; g < number_channel_buckets; g++){
-  //     temp[1] = g;
-  //     for(int b = 0; b < number_channel_buckets; b++){
-  //       temp[2] = b;
-  //       fprintf(temp_file, "(%d,%d,%d): %d\n", (int)temp[0], (int)temp[1], (int)temp[2], calculate_index(temp, 3, bucket_size));
-  //     }
-  //   }
-  // }
-  // free(temp);
-  // fclose(temp_file);
-
   int size_of_histogram;
 
   int number_channel_buckets = ceil((double)DATA_DEPTH/(double)bucket_size);
@@ -36,17 +22,66 @@ void extract_dominant_colors(pixel_t **image_data, int data_count,
     size_of_histogram = temp;
   }
   
-  histogram_t *histogram = create_histogram(size_of_histogram, bucket_size);
-  hist_load_data(histogram, image_data, data_count, channels);
+  histogram_t *histogram = create_histogram(size_of_histogram, bucket_size,
+                                            number_channel_buckets);
+  int loaded = hist_load_data(histogram, image_data, data_count, channels);
+  printf("Loaded %d pixels\n\n", loaded);
+  if(loaded < data_count){
+    //not all data was processed
+  }
 
+  int adjusted_size = 0;
+  int next_empty = 0;
+  int r_ptr = histogram->capacity - 1;
 
-  //Running into an issue here. so for each bucket in each channel, I need to
-  //initialize all the other buckets of the other channes. This is, of course.
-  //exponential (see use of pow above), but I'm too tired to figure out what
-  //I need to do right now to do this. Below is multiplicative,
-  //(i.e. initialize the number of buckets for each channel)
+  while(next_empty < r_ptr){
+    while(next_empty < histogram->capacity 
+          && histogram->values[next_empty] && next_empty <= r_ptr){
+      next_empty++;
+      adjusted_size++;
+      if(next_empty == histogram->capacity) goto sorted;
+    }
+    if(!histogram->values[next_empty] && histogram->values[r_ptr]){
+      histogram->values[next_empty] = histogram->values[r_ptr];
+      histogram->values[r_ptr] = NULL;
+      adjusted_size++;
+      next_empty++;
+    }
+    while(r_ptr > 0 && !histogram->values[r_ptr] && next_empty < r_ptr){
+      r_ptr--;
+    }
+  }
 
+sorted:
+  printf("histogram size: %d\nadjusted size: %d\n\n", histogram->size, adjusted_size);
 
-  //Decided to laizly instantiate the buckets as needed
+  for(int i = 0; i < adjusted_size; i++){
+    printf("(");
+    for(int j = 0; j < histogram->values[i]->data_size; j++){
+      printf("%d", (int)histogram->values[i]->representative->values[j]);
+      if(j!=histogram->values[i]->data_size - 1) printf("\t");
+    }
+    printf("):\t%d\n",histogram->values[i]->count);
+  }
+  printf("\n\n");
 
+  qsort(histogram->values,histogram->size,sizeof(bucket_t *),bucket_comparator);
+
+  for(int i = 0; i < adjusted_size; i++){
+    printf("(");
+    for(int j = 0; j < histogram->values[i]->data_size; j++){
+      printf("%d", (int)histogram->values[i]->representative->values[j]);
+      if(j!=histogram->values[i]->data_size - 1) printf("\t");
+    }
+    printf("):\t%d\n",histogram->values[i]->count);
+  }
+
+  destroy_histogram(histogram);
+}
+
+int bucket_comparator(const void *lhs, const void *rhs){
+  int l = ((bucket_t *)lhs)->count;
+  int r = ((bucket_t *)rhs)->count;
+   
+   return (l-r);
 }
