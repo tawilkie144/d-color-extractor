@@ -1,45 +1,53 @@
 ﻿#ifndef COMMON_H
 #define COMMON_H
 
-#define DATA_DEPTH 255
+#define APP_NAME "DominantColors"
+
+#define max(x,y) (x > y ? x : y)
+#define min(x,y) (x < y ? x : y)
+
 
 //===========================================================================//
 //----------------------------------Records----------------------------------//
 //===========================================================================//
 
+typedef enum ColorRepresentation{
+  kRGB,
+  kHSV
+} ColorRep_t;
+
+/**
+ * @brief 
+ * 
+ */
 typedef struct pixel{
-  unsigned char *values;
+  ColorRep_t representation;
+  float *values;
+  float *maximums;
   int channels;
 } pixel_t;
 
 typedef struct image{
-    pixel_t **pixel_data;
-    int width;
-    int height;
-    int bytes_per_pixel;
-  } image_t;
+  pixel_t **pixel_data;
+  int width;
+  int height;
+  int bytes_per_pixel;
+} image_t;
 
-typedef struct color{
-  int channels;
-  int monochrome_depth;
-  int analogous_count;
-  pixel_t *color;
-  pixel_t *complement;
-  pixel_t **monochrome;
-  pixel_t **analogous;
-  pixel_t **triadic;
-  pixel_t **tetradic;
-} color_t;
+
 
 //===========================================================================//
 //---------------------------------Functions---------------------------------//
 //===========================================================================//
 
 void destroy_image(image_t *);
-pixel_t *create_pixel(int depth, unsigned char *data);
+pixel_t *create_pixel(int depth, float *data, ColorRep_t type);
+pixel_t *copy_pixel(pixel_t *in_pixel);
+void print_pixel(pixel_t *in_pixel, int verbose);
 void destroy_pixel(pixel_t *);
-color_t *create_color(pixel_t *value);
-void print_colors(color_t *color);
-void destroy_color(color_t *to_destroy);
-
+void convert_rgb_hsv(float r, float g, float b,
+                     /*out*/float *h,/*out*/float *s,/*out*/float *v);
+void convert_hsv_rgb(float h, float s, float v,
+                     /*out*/float *r,/*out*/float*g,/*out*/float *b);
+void print_image(image_t *image);
 #endif

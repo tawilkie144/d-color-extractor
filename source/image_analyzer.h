@@ -5,7 +5,7 @@ typedef struct pixel pixel_t;
 typedef struct color color_t;
 
 color_t **extract_dominant_colors(int *number_to_return, pixel_t **image_data,
-                             int data_count, int channels, int bucket_size);
+                             int data_count, int channels, int num_buckets);
 
 
 #endif

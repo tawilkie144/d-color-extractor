@@ -6,44 +6,52 @@
 #include "common.h"
 #include "models/histogram.h"
 #include "image_analyzer.h"
+#include "color.h"
 
 int bucket_comparator(const void *lhs, const void *rhs);
 
 color_t **extract_dominant_colors(int *number_to_return, pixel_t **image_data,
-                             int data_count, int channels, int bucket_size)
+                             int data_count, int channels, 
+                             int buckets_per_channel)
 {
   int size_of_histogram;
+  float *bucket_size;
 
-  int number_channel_buckets = ceil((double)DATA_DEPTH/(double)bucket_size);
-  long temp = ceil(powl(number_channel_buckets, channels));
-  if(temp >= INT_MAX){
-    bucket_size = ceil(DATA_DEPTH/ceil(logl(INT_MAX - 1)/log(channels)));
-    size_of_histogram = INT_MAX - 1;
-  }else{
-    size_of_histogram = temp;
+
+  float rgb_data_depth = 255.f;
+  float hsv_data_depth[3] = {360.f,1.f,1.f};
+
+  if(data_count < 1) return NULL;
+  ColorRep_t type = image_data[0]->representation;
+
+  bucket_size = calloc(sizeof(float), channels);
+  for(int i = 0; i < channels;i++){
+    bucket_size[i] = type == kHSV?hsv_data_depth[i]/(float)buckets_per_channel:
+                                  rgb_data_depth/(float)buckets_per_channel;
   }
-  
+
+  size_of_histogram = pow(buckets_per_channel, channels);
   histogram_t *histogram = create_histogram(size_of_histogram, bucket_size,
-                                            number_channel_buckets);
+                                            buckets_per_channel);
   int loaded = hist_load_data(histogram, image_data, data_count, channels);
-  printf("Loaded %d pixels\n\n", loaded);
+  //if verbose
+  printf("Loaded %d pixels", loaded);
   if(loaded < data_count){
-    //not all data was processed
+    printf(": missing %d pixels", data_count - loaded);
   }
+  printf("\n\n");
 
   int adjusted_size = trim_histogram(histogram);
 
-  printf("histogram size: %d\nadjusted size: %d\n\n", histogram->size, adjusted_size);
+  printf("histogram size: %d\nadjusted size: %d\n\n", histogram->size,
+                                                      adjusted_size);
 
-  qsort(histogram->values, histogram->capacity, sizeof(bucket_t *), bucket_comparator);
+  qsort(histogram->values, histogram->capacity, sizeof(bucket_t *),
+         bucket_comparator);
 
   for(int i = 0; i < histogram->capacity; i++){
     if(histogram->values[i]){
-      printf("(");
-      for(int j = 0; j < histogram->values[i]->data_size; j++){
-        printf("%d", (int)histogram->values[i]->representative->values[j]);
-        if(j!=histogram->values[i]->data_size - 1) printf("\t");
-      }
+      print_pixel(histogram->values[i]->representative, 0);
       printf("):\t%d\n",histogram->values[i]->count);
     }
   }
@@ -51,10 +59,10 @@ color_t **extract_dominant_colors(int *number_to_return, pixel_t **image_data,
   if(histogram->size < *number_to_return){
     *number_to_return = histogram->size;
     //if verbose
-    printf("You have requested more colors that are present in the image.\n\
-            Try reducing the bucket size, or the number of desired dominant \
-            colors.\n There are %d colors in the image with the bucket size of\
-            %d", histogram->size, bucket_size);
+    printf("You have requested more colors that are present in the image.\n"
+           "Try reducing the number of buckets, or the number of desired"
+           "dominant colors.\nThere are %d colors in the image with"
+           "%d buckets\n\n", histogram->size, buckets_per_channel);
   } 
 
   color_t **r_val = malloc(sizeof(color_t *) * *number_to_return);
@@ -63,6 +71,7 @@ color_t **extract_dominant_colors(int *number_to_return, pixel_t **image_data,
   }
 
   destroy_histogram(histogram);
+  free(bucket_size);
 
   return r_val;
 }

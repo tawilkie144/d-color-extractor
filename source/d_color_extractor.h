@@ -8,10 +8,10 @@
 
 // Completely arbitrary number of allowed colors for now.
 #define MAX_NUM_COLORS 20
-// Completely arbitrary bucket size
-#define MAX_BUCKET_SIZE 85
-// Three chanels, R,G,B, and A.
-#define CHANELS 4
+// Ensure that if using RGB, each bucket is at least three pixels
+#define MAX_NUM_BUCKETS_PER_CHANNEL 85
+//Completely arbitrary number of allowed monochrome colors to find
+#define MAX_NUM_MONOCHROME_COLORS 5
 
 #define JPEG_EXTS 4
 
@@ -25,7 +25,7 @@ typedef enum SUPPORTED_EXT{
   undefined
 } supported_ext_t;
 
-const char * tpyes[] = {"jpg", "jfif", "pjpeg", "pjp"};
+const char * types[] = {"jpg", "jpeg", "jfif", "pjpeg", "pjp"};
 
 //===========================================================================//
 //---------------------------------Functions---------------------------------//

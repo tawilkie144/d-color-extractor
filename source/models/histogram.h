@@ -27,13 +27,20 @@ typedef struct histogram_bucket{
  * 
  * @property values
  * @property bucket_size
+ * @property buckets_per_channel
  * @property size
+ * @property capacity
  */
 typedef struct histogram{
+  //represents the buckets
   bucket_t **values;
-  int bucket_size;
+  //represents how large the buckets are for each channel
+  float *bucket_size;
+  //how many buckets are allocated to each channel of the color
   int buckets_per_channel;
+  //represents how many buckets are currently in use in the histogram
   int size;
+  //represents how many buckets are in the histogram
   int capacity;
 } histogram_t;
 
@@ -42,7 +49,7 @@ typedef struct histogram{
 //---------------------------------Functions---------------------------------//
 //===========================================================================//
 
-histogram_t *create_histogram(int size, int bucket_size, int channel_size);
+histogram_t *create_histogram(int size, float *bucket_size, int channel_size);
 int hist_load_data(histogram_t *hist, pixel_t **data, int data_count, 
                    int data_size);
 int trim_histogram(histogram_t *to_trim);
