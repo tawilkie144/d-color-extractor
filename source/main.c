@@ -41,14 +41,13 @@ int main(int argc, char **argv) {
   color_t **dominant_colors = NULL;
 
   //Define the options we accept
-  static char *VALID_OPTIONS = "hn:b:r:m:";
+  static char *VALID_OPTIONS = "hn:b:m:";
   int option_index = 0;
   static struct option long_options[] =
   {
     {"help",            no_argument,        0,  'h'},
     {"number",          optional_argument,  0,  'n'},
     {"bucket",          optional_argument,  0,  'b'},
-    {"representation",  optional_argument,  0,  'r'},
     {"monochrome",      optional_argument,  0,  'm'},
     {0,                 0,                  0,   0}
   };
@@ -91,9 +90,6 @@ int main(int argc, char **argv) {
             exit(1);
           }
           number_of_monochromes = (int)temp;
-          break;
-        case (int)'r':
-          strcmp(optarg, "rgb") == 0 ? representation = kRGB : kHSV;
           break;
         case (int)'h': //print help message
         case '?':
@@ -163,11 +159,10 @@ void print_help(char *file_name){
   printf(out_string, file_name, file_name);
 }
 
-pixel_t *create_hsv_pixel(int depth, float *data){
+pixel_t *create_pixel(int depth, float *data, ColorRep_t type){
   if(depth != 3) return NULL;
   pixel_t *r_value = malloc(sizeof(pixel_t));
   if(!r_value) return NULL;
-  r_value->representation = kHSV;
   r_value->channels = depth;
   r_value->values = calloc(depth, sizeof(float));
   r_value->maximums = calloc(depth, sizeof(float));
@@ -184,44 +179,9 @@ pixel_t *create_hsv_pixel(int depth, float *data){
   return r_value;
 }
 
-pixel_t *create_rgb_pixel(int depth, float *data){
-  pixel_t *r_value = malloc(sizeof(pixel_t));
-  if(!r_value) return NULL;
-  r_value->representation = kRGB;
-  r_value->channels = depth;
-  r_value->values = calloc(depth, sizeof(float));
-  r_value->maximums = calloc(depth, sizeof(float));
-  if(!r_value->values || !r_value->maximums){
-    destroy_pixel(r_value);
-    return NULL;
-  }
-
-  for(int i = 0; i < depth; i++){
-    r_value->maximums[i] = 255;
-    r_value->values[i] = data[i];
-  }
-
-  return r_value;
-}
-
-pixel_t *create_pixel(int depth, float *data, ColorRep_t type){
-  switch(type){
-    case kHSV:
-      return create_hsv_pixel(depth, data);
-      break;
-    case kRGB:
-      return create_rgb_pixel(depth, data);
-      break;
-    default:
-      return create_hsv_pixel(depth, data);
-      break;
-  }
-}
-
 pixel_t *copy_pixel(pixel_t *in_pixel){
   pixel_t *r_value = malloc(sizeof(pixel_t));
   if(!r_value) return NULL;
-  r_value->representation = in_pixel->representation;
   r_value->channels = in_pixel->channels;
   r_value->values = calloc(r_value->channels, sizeof(float));
   r_value->maximums = calloc(r_value->channels, sizeof(float));
@@ -241,9 +201,7 @@ pixel_t *copy_pixel(pixel_t *in_pixel){
 
 void print_pixel(pixel_t *in_pixel, int verbose){
   if(verbose){
-    printf("Representation: %s\nSize %d\nvalues: ",
-                             in_pixel->representation == kHSV ? "HSV" : "RGB",
-                             in_pixel->channels);
+    printf("Size %d\nvalues: ", in_pixel->channels);
   }
   printf("(");
   for(int i = 0; i < in_pixel->channels; i++){

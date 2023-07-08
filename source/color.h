@@ -1,15 +1,16 @@
 ﻿#ifndef COLOR_H
 #define COLOR_H
 
-#define ANALOGOUS_SIZE 3
-#define TRIADIC_SIZE 3
-#define TETRADIC_SIZE 4
+#define ANALOGOUS_SIZE 2
+#define TRIADIC_SIZE 2
+#define TETRADIC_SIZE 3
 
 struct pixel_t;
 
 typedef struct color{
   int channels;
   int monochrome_depth;
+  int pixel_monochrome_num;
   pixel_t *color;
   pixel_t *complement;
   pixel_t **monochrome;

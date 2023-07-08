@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"jpeg.h": "c",
+			"turbojpeg.h": "c",
+			"limits.h": "c",
+			"stdio.h": "c",
+			"iostream": "cpp",
+			"ostream": "cpp"
+		}
+	}
+}

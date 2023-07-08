@@ -17,17 +17,13 @@ color_t **extract_dominant_colors(int *number_to_return, pixel_t **image_data,
   int size_of_histogram;
   float *bucket_size;
 
-
-  float rgb_data_depth = 255.f;
   float hsv_data_depth[3] = {360.f,1.f,1.f};
 
   if(data_count < 1) return NULL;
-  ColorRep_t type = image_data[0]->representation;
 
   bucket_size = calloc(sizeof(float), channels);
   for(int i = 0; i < channels;i++){
-    bucket_size[i] = type == kHSV?hsv_data_depth[i]/(float)buckets_per_channel:
-                                  rgb_data_depth/(float)buckets_per_channel;
+    bucket_size[i] = hsv_data_depth[i]/(float)buckets_per_channel;
   }
 
   size_of_histogram = pow(buckets_per_channel, channels);
@@ -43,12 +39,14 @@ color_t **extract_dominant_colors(int *number_to_return, pixel_t **image_data,
 
   int adjusted_size = trim_histogram(histogram);
 
+  //TODO: Remove this printing stuff
   printf("histogram size: %d\nadjusted size: %d\n\n", histogram->size,
                                                       adjusted_size);
 
   qsort(histogram->values, histogram->capacity, sizeof(bucket_t *),
          bucket_comparator);
 
+  //TODO: Remove this printing stuff
   for(int i = 0; i < histogram->capacity; i++){
     if(histogram->values[i]){
       print_pixel(histogram->values[i]->representative, 0);
@@ -67,7 +65,8 @@ color_t **extract_dominant_colors(int *number_to_return, pixel_t **image_data,
 
   color_t **r_val = malloc(sizeof(color_t *) * *number_to_return);
   for(int i = 0; i < *number_to_return; i++){
-    r_val[i] = create_color(histogram->values[i]->representative);
+    //TODO: need to set number of monochromes values
+    r_val[i] = create_color(histogram->values[i]->representative, 1);
   }
 
   destroy_histogram(histogram);

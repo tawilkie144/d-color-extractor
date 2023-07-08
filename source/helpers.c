@@ -45,11 +45,23 @@ void convert_rgb_hsv(float r, float g, float b,
   }
 }
 
-#define hue_conv(n) (modulusf(n + (h/60.0f), 6))
-
-void convert_hsv_rgb(float h, float s, float v,
-      /*out*/float *r,/*out*/float *g,/*out*/float *b){
-  *r = (v - (v * s * max(0, min(min(1,hue_conv(5)), 4-hue_conv(5)))))*255;
-  *g = (v - (v * s * max(0, min(min(1,hue_conv(3)), 4-hue_conv(3)))))*255;
-  *b = (v - (v * s * max(0, min(min(1,hue_conv(1)), 4-hue_conv(1)))))*255;
+pixel_t *rotate_rgb(pixel_t *pixel, float rotation){
+  if(pixel->channels != 3 && pixel->representation != kRGB) return NULL;
+  float *values = malloc(sizeof(float)*pixel->channels);
+  if(!values) return NULL;
+  float h_max = 360.f;
+  if(rotation < 0) rotation = h_max + rotation;
+  convert_rgb_hsv(pixel->values[0],pixel->values[1],pixel->values[2],
+                  &values[0],&values[1],&values[2]);
+  values[0] = fmodf(values[0] + rotation, h_max);
+  convert_rgb(values[0], values[1], values[2],
+              &values[0],&values[1],&values[2]);
+  pixel_t *r_value = malloc(sizeof(pixel_t));
+  if(!r_value){
+    free(values);
+    return NULL;
+  }
+  r_value = create_pixel(pixel->channels, values, kRGB);
+  free(values);
+  return r_value;
 }

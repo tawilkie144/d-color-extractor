@@ -6,7 +6,7 @@
 
 
 pixel_t *calculate_complement(pixel_t *pixel);
-pixel_t **calculate_monochromes(pixel_t *pixel, int number);
+pixel_t **calculate_monochromes(pixel_t *pixel, int number, int *indx);
 pixel_t **calculate_analogous(pixel_t *pixel);
 pixel_t **calculate_triadic(pixel_t *pixel);
 pixel_t **calculate_tetradic(pixel_t *pixel);
@@ -17,7 +17,8 @@ color_t *create_color(pixel_t *value, int monochrom_num){
   r_val->monochrome_depth = 2;
   r_val->color = copy_pixel(value);
   r_val->complement = calculate_complement(value);
-  r_val->monochrome = calculate_monochromes(value, monochrom_num);
+  r_val->monochrome = calculate_monochromes(value, monochrom_num,
+                                            &r_val->pixel_monochrome_num);
   r_val->analogous = calculate_analogous(value);
   r_val->triadic = calculate_triadic(value);
   r_val->tetradic = calculate_tetradic(value);
@@ -91,32 +92,160 @@ pixel_t *calculate_complement(pixel_t *pixel){
   return r_value;
 }
 
-pixel_t **calculate_monochromes(pixel_t *pixel, int number){
+pixel_t **calculate_monochromes(pixel_t *pixel, int number, /*out*/int *indx){
   pixel_t **r_value = malloc(sizeof(pixel_t *) * number);
   if(!r_value) return NULL;
+  float min_sat = 0.3f;
+  float max_sat = 0.9f;
   
   if(pixel->representation == kHSV){
-    float initial = pixel->values[2];
-    float interval = pixel->maximums[2];
-    float threshold = 0.2f;
-    int starting_index = 
-    float offset = fmodf(initial, interval);
+    int i = 0;
+    float init = min(max(pixel->values[2], min_sat), max_sat);
+    float intvl = (pixel->maximums[2] - (min_sat + 1 - max_sat)) / number;
+
+    if(init == min_sat){
+      *indx = 0;
+    }else{
+      float init_inv = 1.0f / init;
+      float intvl_inv = 1.0f / intvl;
+
+      //calculate which is the next interval that is greater than our input
+      float intvl_up = ceilf(init * intvl_inv) * intvl > max_sat
+                     ? max_sat : ceilf(init * intvl_inv) * intvl;
+      //calculate which is the next interval that is less than our input
+      float intvl_down = floorf(init * intvl_inv) * intvl < min_sat 
+                       ? min_sat : floorf(init * intvl_inv) * intvl;
+
+      //Calculate which index our input color would be on the scale that 
+      //equally partitions the range of saturation values
+      *indx = ceil(((fabsf(intvl_up - init) < fabsf(intvl_down - init) 
+            ? intvl_up : intvl_down) - min_sat) * intvl_inv);
+    }
+
+    float *values = malloc(sizeof(float) * pixel->channels);
+    if(!values){
+      free(r_value);
+      return NULL;
+    }
+
+    for(i = 0; i < pixel->channels; i++){
+      values[i] = pixel->values[i];
+    }
+
+    int offset = 0;
+    for(i = 0; i < number; i++){
+      if(i == *indx) offset++;
+      values[2] = (i + offset) * intvl;
+      r_value[i] = create_pixel(pixel->channels, values, kHSV);
+    }
+
+    
+    free(values);
+    return r_value;
+  }else if(pixel->representation == kRGB){
+    int max_idx = pixel->values[0] > pixel->values[1] ? 0 : 1;
+    max_idx = pixel->values[max_idx] > pixel->values[2] ? max_idx : 2;
+
+    int min_idx = pixel->values[0] < pixel->values[1] ? 0 : 1;
+    min_idx = pixel->values[min_idx] < pixel->values[2] ? min_idx : 2;
+
+    if(pixel->values[min_idx] == pixel->values[max_idx]){
+
+    }else{
+      float chroma = pixel->values[max_idx] - pixel->values[min_idx];
+      float sat = chroma/pixel->values[max_idx];
+    }
   }
 
   return NULL;
 }
 
 pixel_t **calculate_analogous(pixel_t *pixel){
+  pixel_t **r_value = malloc(sizeof(pixel_t *) * ANALOGOUS_SIZE);
+  if(!r_value) return NULL;
+  float rotation = 30.f;
+  
+  if(pixel->representation == kHSV){
+    float *values = malloc(sizeof(float) * pixel->channels);
+    if(!values){
+      free(r_value);
+      return NULL;
+    }
+    unsigned char index;
+    values[0] = fmodf(pixel->values[0] + rotation, pixel->maximums[0]);
+    values[1] = pixel->values[1];
+    values[2] = pixel->values[2];
+    index = values[0] > pixel->values[0] ? 1 : 0;
+    r_value[index] = create_pixel(pixel->channels, values,
+                                  pixel->representation);                          
+    values[0] = fmodf(pixel->values[0] + (pixel->maximums[0]-rotation),
+                      pixel->maximums[0]);
+    index = index == 1 ? 0 : 1;  
+    r_value[index] = create_pixel(pixel->channels, values,
+                                  pixel->representation);
+    free(values);
+    return r_value;
+  }else if(pixel->representation == kRGB){
+    //For RGB we convert to HSV, rotate, then convert back to RGB.
+    //Not very preformant
+    r_value[0] = rotate_rgb(pixel, rotation);
+    r_value[1] = rotate_rgb(pixel, 360.f-rotation);
+  }
 
   return NULL;
 }
 
 pixel_t **calculate_triadic(pixel_t *pixel){
+  pixel_t **r_value = malloc(sizeof(pixel_t *) * TRIADIC_SIZE);
+  if(!r_value) return NULL;
+  float rotation = 120.f;
+  
+  if(pixel->representation == kHSV){
+    float *values = malloc(sizeof(float) * pixel->channels);
+    unsigned char index;
+    values[0] = fmodf(pixel->values[0] + rotation, pixel->maximums[0]);
+    values[1] = pixel->values[1];
+    values[2] = pixel->values[2];
+    index = values[0] > pixel->values[0] ? 1 : 0;
+    r_value[index] = create_pixel(pixel->channels, values,
+                                  pixel->representation);                          
+    values[0] = fmodf(pixel->values[0] + (pixel->maximums[0]-rotation),
+                      pixel->maximums[0]);
+    index = index == 1 ? 0 : 1;  
+    r_value[index] = create_pixel(pixel->channels, values,
+                                  pixel->representation);
+    free(values);
+    return r_value;
+  }else if(pixel->representation == kRGB){
+    r_value[0] = rotate_rgb(pixel, rotation);
+    r_value[1] = rotate_rgb(pixel, 360.f-rotation);
+    return r_value;
+  }
 
   return NULL;
 }
 
 pixel_t **calculate_tetradic(pixel_t *pixel){
+  pixel_t **r_value = malloc(sizeof(pixel_t *) * TETRADIC_SIZE);
+  if(!r_value) return NULL;
+  float rotation = 90.f;
+  if(pixel->representation == kHSV){
+    float *values = malloc(sizeof(float) * pixel->channels);
+    values[1] = pixel->values[1];
+    values[2] = pixel->values[2];
+    for(int i = 0; i < TETRADIC_SIZE; i++){
+      values[0] = fmodf(pixel->values[0] + (rotation * i), pixel->maximums[0]);
+      r_value[i] = create_pixel(pixel->channels, values,
+                                pixel->representation);    
+    }
+    free(values);
+    return r_value;
+  }else if(pixel->representation == kRGB){
+    for(int i = 0; i < TETRADIC_SIZE; i++){
+      r_value[i] = rotate_rgb(pixel, i * rotation);
+    }
+    return r_value;
+  }
 
   return NULL;
 }

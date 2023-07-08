@@ -47,7 +47,6 @@ void print_pixel(pixel_t *in_pixel, int verbose);
 void destroy_pixel(pixel_t *);
 void convert_rgb_hsv(float r, float g, float b,
                      /*out*/float *h,/*out*/float *s,/*out*/float *v);
-void convert_hsv_rgb(float h, float s, float v,
-                     /*out*/float *r,/*out*/float*g,/*out*/float *b);
 void print_image(image_t *image);
+pixel_t *rotate_rgb(pixel_t *pixel, float rotation);
 #endif
